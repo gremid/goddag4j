@@ -31,20 +31,14 @@ public class Text extends GoddagNode {
 
     private static final String PREFIX = GoddagNode.PREFIX + ".text";
 
-    protected Text(Node node) {
+    public Text(Node node) {
         super(node);
     }
 
-    public static Text create(GraphDatabaseService db, String content) {
-        Text contentNode = new Text(db.createNode());
-        contentNode.setNodeType(GoddagNodeType.TEXT);
-        contentNode.setText(content);
-        return contentNode;
-    }
-
-    @Override
-    public void stream(Element root, GoddagEventHandler handler) {
-        handler.text(this);
+    public Text(GraphDatabaseService db, String content) {
+        this(db.createNode());
+        setNodeType(NodeType.TEXT);
+        setText(content);
     }
 
     @Override
@@ -74,9 +68,9 @@ public class Text extends GoddagNode {
             if (lastPos == positions[pc]) {
                 continue;
             }
-            segments.add(Text.create(db, content.substring(lastPos, positions[pc])));
+            segments.add(new Text(db, content.substring(lastPos, positions[pc])));
             if ((pc + 1) == positions.length) {
-                segments.add(Text.create(db, content.substring(positions[pc])));
+                segments.add(new Text(db, content.substring(positions[pc])));
             } else {
                 lastPos = positions[pc];
             }

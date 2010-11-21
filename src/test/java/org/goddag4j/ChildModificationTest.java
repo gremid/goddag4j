@@ -36,7 +36,7 @@ public class ChildModificationTest extends BaseTest {
     @Test
     public void addAndRemove() {
         for (int i = 0; i < 10; i++) {
-            root.insert(root, Element.create(db, "tei", "p"), null);
+            root.insert(root, new Element(db, "tei", "p"), null);
         }
         Assert.assertEquals(10, IteratorUtil.count(root.getChildren(root).iterator()));
 
@@ -56,7 +56,7 @@ public class ChildModificationTest extends BaseTest {
     public void insertBefore() {
         GoddagNode last = null;
         for (int i = 0; i < 10; i++) {
-            Text text = Text.create(db, Integer.toString(i));
+            Text text = new Text(db, Integer.toString(i));
             root.insert(root, text, last);
             last = text;
         }
@@ -71,7 +71,7 @@ public class ChildModificationTest extends BaseTest {
     public void insertAndDelete() {
         GoddagNode last = null;
         for (int i = 0; i < 10; i++) {
-            Text text = Text.create(db, Integer.toString(i));
+            Text text = new Text(db, Integer.toString(i));
             root.insert(root, text, last);
             last = text;
         }

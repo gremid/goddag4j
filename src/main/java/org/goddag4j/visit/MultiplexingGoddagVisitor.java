@@ -19,33 +19,54 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.goddag4j.util;
+package org.goddag4j.visit;
 
 import org.goddag4j.Comment;
 import org.goddag4j.Element;
-import org.goddag4j.GoddagEventHandler;
 import org.goddag4j.ProcessingInstruction;
 import org.goddag4j.Text;
 
-public class DefaultGoddagEventHandler implements GoddagEventHandler {
+public class MultiplexingGoddagVisitor extends GoddagVisitor {
 
-    @Override
-    public void startElement(Element element) {
+    private final GoddagVisitor[] visitors;
+
+    public MultiplexingGoddagVisitor(GoddagVisitor... visitors) {
+        this.visitors = visitors;
     }
 
     @Override
-    public void endElement(Element element) {
+    public void startElement(Element root, Element element) {
+        for (GoddagVisitor handler : visitors) {
+            handler.startElement(root, element);
+        }
     }
 
     @Override
-    public void text(Text text) {
+    public void endElement(Element root, Element element) {
+        for (GoddagVisitor handler : visitors) {
+            handler.endElement(root, element);
+        }
     }
 
     @Override
-    public void comment(Comment comment) {
+    public void text(Element root, Text text) {
+        for (GoddagVisitor handler : visitors) {
+            handler.text(root, text);
+        }
     }
 
     @Override
-    public void processingInstruction(ProcessingInstruction pi) {
+    public void comment(Element root, Comment comment) {
+        for (GoddagVisitor handler : visitors) {
+            handler.comment(root, comment);
+        }
     }
+
+    @Override
+    public void processingInstruction(Element root, ProcessingInstruction pi) {
+        for (GoddagVisitor handler : visitors) {
+            handler.processingInstruction(root, pi);
+        }
+    }
+
 }

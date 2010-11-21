@@ -33,36 +33,38 @@ import org.goddag4j.Attribute;
 import org.goddag4j.Comment;
 import org.goddag4j.Element;
 import org.goddag4j.GoddagNode;
-import org.goddag4j.GoddagNodeType;
+import org.goddag4j.GoddagNode.NodeType;
 import org.goddag4j.ProcessingInstruction;
 import org.goddag4j.Text;
 
-public class GoddagJsonSerializer {
+public class GoddagJSONWriter {
 
-    private Map<GoddagNodeType, Set<GoddagNode>> serialized = new HashMap<GoddagNodeType, Set<GoddagNode>>();
+    private final Map<URI, String> namespaces;
+    private Map<NodeType, Set<GoddagNode>> writeLog = new HashMap<NodeType, Set<GoddagNode>>();
 
-    public void serialize(JsonGenerator out, Iterable<Element> roots) throws IOException {
-        serialize(out, NamespaceMap.EMPTY_MAP, roots);
+    public GoddagJSONWriter(Map<URI, String> namespaces) {
+        this.namespaces = namespaces;
     }
     
-    public void serialize(JsonGenerator out, Map<URI, String> namespaces, Iterable<Element> roots) throws IOException {
-        for (GoddagNodeType nt : GoddagNodeType.values()) {
-            serialized.put(nt, new HashSet<GoddagNode>());
+    public void write(Iterable<Element> roots, JsonGenerator out) throws IOException {
+        writeLog.clear();
+        for (NodeType nt : NodeType.values()) {
+            writeLog.put(nt, new HashSet<GoddagNode>());
         }
 
         out.writeStartObject();
 
         out.writeArrayFieldStart("trees");
         for (Element root : roots) {
-            serializeTree(out, root, root);
+            writeTree(out, root, root);
         }
         out.writeEndArray();
 
         out.writeArrayFieldStart("nodes");
-        for (GoddagNodeType nt : GoddagNodeType.values()) {
+        for (NodeType nt : NodeType.values()) {
             out.writeStartArray();
-            for (GoddagNode node : serialized.get(nt)) {
-                serializeNode(out, node, nt);
+            for (GoddagNode node : writeLog.get(nt)) {
+                writeNode(out, node, nt);
             }
             out.writeEndArray();
         }
@@ -76,11 +78,12 @@ public class GoddagJsonSerializer {
             out.writeEndObject();
         }
         out.writeEndObject();
+        writeLog.clear();
     }
 
-    protected void serializeTree(JsonGenerator out, Element root, GoddagNode node) throws IOException {
-        final GoddagNodeType nt = node.getNodeType();
-        serialized.get(nt).add(node);
+    private void writeTree(JsonGenerator out, Element root, GoddagNode node) throws IOException {
+        final NodeType nt = node.getNodeType();
+        writeLog.get(nt).add(node);
 
         out.writeStartObject();
         out.writeNumberField("id", node.node.getId());
@@ -88,14 +91,14 @@ public class GoddagJsonSerializer {
         if (node.hasChildren(root)) {
             out.writeArrayFieldStart("ch");
             for (GoddagNode child : node.getChildren(root)) {
-                serializeTree(out, root, child);
+                writeTree(out, root, child);
             }
             out.writeEndArray();
         }
         out.writeEndObject();
     }
 
-    protected void serializeNode(JsonGenerator out, GoddagNode node, GoddagNodeType nt) throws IOException {
+    private void writeNode(JsonGenerator out, GoddagNode node, NodeType nt) throws IOException {
         out.writeStartArray();
         out.writeNumber(node.node.getId());
 
@@ -124,10 +127,10 @@ public class GoddagJsonSerializer {
             out.writeString(pi.getInstruction());
             break;
         }
-        serializeAdditionalNodeData(out, node, nt);
+        doWriteNode(out, node, nt);
         out.writeEndArray();
     }
 
-    protected void serializeAdditionalNodeData(JsonGenerator out, GoddagNode node, GoddagNodeType nt) {
+    protected void doWriteNode(JsonGenerator out, GoddagNode node, NodeType nt) {
     }
 }

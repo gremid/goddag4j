@@ -24,6 +24,11 @@ package org.goddag4j;
 import java.io.File;
 import java.io.IOException;
 
+import org.codehaus.jackson.JsonEncoding;
+import org.codehaus.jackson.JsonFactory;
+import org.codehaus.jackson.JsonGenerator;
+import org.goddag4j.io.GoddagJSONWriter;
+import org.goddag4j.io.NamespaceMap;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -69,7 +74,7 @@ public abstract class BaseTest {
         }
         
         if (root == null) {
-            root = Element.create(db, "tei", "text");
+            root = new Element(db, "tei", "text");
             db.getReferenceNode().createRelationshipTo(root.node, TEST);
         }
     }
@@ -80,6 +85,15 @@ public abstract class BaseTest {
             transaction.success();
             transaction.finish();
             transaction = null;
+        }
+    }
+
+    protected static void dump(Iterable<Element> roots) throws IOException {
+        final JsonGenerator out = new JsonFactory().createJsonGenerator(System.out, JsonEncoding.UTF8);
+        try {
+            new GoddagJSONWriter(NamespaceMap.EMPTY).write(roots, out);
+        } finally {
+            out.close();
         }
     }
 

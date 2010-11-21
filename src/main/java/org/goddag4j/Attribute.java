@@ -28,7 +28,7 @@ public class Attribute {
     public static final String PREFIX = GoddagNode.PREFIX + ".attr";
     public final Node node;
 
-    protected Attribute(Node node) {
+    public Attribute(Node node) {
         this.node = node;
     }
 

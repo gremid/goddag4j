@@ -44,7 +44,7 @@ public class MultiRootedTree implements Iterable<Element> {
     }
 
     public Element newRoot(String prefix, String name) {
-        final Element root = Element.create(node.getGraphDatabase(), prefix, name);
+        final Element root = new Element(node.getGraphDatabase(), prefix, name);
         addRoot(root);
         return root;
     }

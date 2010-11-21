@@ -37,23 +37,15 @@ public class Element extends GoddagNode {
 
     private static final String PREFIX = GoddagNode.PREFIX + ".element";
 
-    protected Element(Node node) {
+    public Element(Node node) {
         super(node);
     }
 
-    public static Element create(GraphDatabaseService db, String prefix, String name) {
-        Element root = new Element(db.createNode());
-        root.setNodeType(GoddagNodeType.ELEMENT);
-        root.setName(name);
-        root.setPrefix(prefix);
-        return root;
-    }
-
-    @Override
-    public void stream(Element root, GoddagEventHandler handler) {
-        handler.startElement(this);
-        super.stream(root, handler);
-        handler.endElement(this);
+    public Element(GraphDatabaseService db, String prefix, String name) {
+        this(db.createNode());
+        setNodeType(NodeType.ELEMENT);
+        setName(name);
+        setPrefix(prefix);
     }
 
     public Iterable<Attribute> getAttributes() {

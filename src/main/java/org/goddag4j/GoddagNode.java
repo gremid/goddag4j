@@ -21,11 +21,6 @@
 
 package org.goddag4j;
 
-import static org.goddag4j.GoddagNodeEdge.ALIGNMENT_AXIS;
-import static org.goddag4j.GoddagNodeEdge.DESCENDANT_AXIS;
-import static org.goddag4j.GoddagNodeEdge.FIRST_CHILD;
-import static org.goddag4j.GoddagNodeEdge.LAST_CHILD;
-import static org.goddag4j.GoddagNodeEdge.SIBLING_AXIS;
 import static org.neo4j.graphdb.Direction.INCOMING;
 import static org.neo4j.graphdb.Direction.OUTGOING;
 
@@ -33,16 +28,20 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.Stack;
 
+import org.goddag4j.GoddagEdge.EdgeType;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.traversal.TraversalDescription;
 import org.neo4j.helpers.collection.IterableWrapper;
 import org.neo4j.helpers.collection.IteratorUtil;
 import org.neo4j.helpers.collection.NestingIterable;
-import org.neo4j.kernel.Traversal;
 
 public abstract class GoddagNode {
-    public static final GoddagNodeType[] NODE_TYPES = GoddagNodeType.values();
+    public enum NodeType {
+        TEXT, ELEMENT, COMMENT, PI;
+    }
+
+    public static final NodeType[] NODE_TYPES = NodeType.values();
     public static final String PREFIX = "goddag";
     public static final String NODE_TYPE_PROPERTY = PREFIX + ".nt";
     public final Node node;
@@ -51,53 +50,47 @@ public abstract class GoddagNode {
         this.node = node;
     }
 
-    public GoddagNodeType getNodeType() {
+    public NodeType getNodeType() {
         return getNodeType(node);
     }
 
     public Iterable<Element> getRoots() {
-        return new NestingIterable<Element, Relationship>(node.getRelationships(DESCENDANT_AXIS, INCOMING)) {
+        return new NestingIterable<Element, Relationship>(node.getRelationships(EdgeType.CONTAINS, INCOMING)) {
 
             @Override
             protected Iterator<Element> createNestedIterator(Relationship item) {
-                return GoddagNodeEdge.getRoots(item).iterator();
+                return GoddagEdge.getRoots(item).iterator();
             }
         };
     }
 
-    public void stream(Element root, GoddagEventHandler handler) {
-        for (GoddagNode child : getChildren(root)) {
-            child.stream(root, handler);
-        }
-    }
-
     public GoddagNode getParent(Element root) {
-        final Relationship parentRel = GoddagNodeEdge.find(node.getRelationships(DESCENDANT_AXIS, INCOMING), root.node.getId());
+        final Relationship parentRel = GoddagEdge.find(node.getRelationships(EdgeType.CONTAINS, INCOMING), root.node.getId());
         return (parentRel == null ? null : wrap(parentRel.getOtherNode(node)));
     }
 
     public GoddagNode getFirstChild(Element root) {
-        final Relationship firstRel = GoddagNodeEdge.find(node.getRelationships(FIRST_CHILD, OUTGOING), root.node.getId());
+        final Relationship firstRel = GoddagEdge.find(node.getRelationships(EdgeType.HAS_FIRST_CHILD, OUTGOING), root.node.getId());
         return (firstRel == null ? null : wrap(firstRel.getOtherNode(node)));
     }
 
     public GoddagNode getLastChild(Element root) {
-        final Relationship lastRel = GoddagNodeEdge.find(node.getRelationships(LAST_CHILD, INCOMING), root.node.getId());
+        final Relationship lastRel = GoddagEdge.find(node.getRelationships(EdgeType.IS_LAST_CHILD_OF, INCOMING), root.node.getId());
         return (lastRel == null ? null : wrap(lastRel.getOtherNode(node)));
     }
 
     public GoddagNode getNextSibling(Element root) {
-        final Relationship nextRel = GoddagNodeEdge.find(node.getRelationships(SIBLING_AXIS, OUTGOING), root.node.getId());
+        final Relationship nextRel = GoddagEdge.find(node.getRelationships(EdgeType.HAS_SIBLING, OUTGOING), root.node.getId());
         return (nextRel == null ? null : wrap(nextRel.getOtherNode(node)));
     }
 
     public GoddagNode getPreviousSibling(Element root) {
-        final Relationship prevRel = GoddagNodeEdge.find(node.getRelationships(SIBLING_AXIS, INCOMING), root.node.getId());
+        final Relationship prevRel = GoddagEdge.find(node.getRelationships(EdgeType.HAS_SIBLING, INCOMING), root.node.getId());
         return (prevRel == null ? null : wrap(prevRel.getOtherNode(node)));
     }
 
     public boolean hasChildren(Element root) {
-        return (GoddagNodeEdge.find(node.getRelationships(FIRST_CHILD, OUTGOING), root.node.getId()) != null);
+        return (GoddagEdge.find(node.getRelationships(EdgeType.HAS_FIRST_CHILD, OUTGOING), root.node.getId()) != null);
     }
 
     public Iterable<GoddagNode> getChildren(final Element root) {
@@ -177,11 +170,6 @@ public abstract class GoddagNode {
         return text.toString();
     }
 
-    public Iterable<GoddagNode> getAlignedNodes() {
-        return new GoddageNodeWrappingIterable(Traversal.description().relationships(ALIGNMENT_AXIS)
-                .filter(Traversal.returnAllButStartNode()).traverse(node).nodes());
-    }
-
     public Iterable<GoddagNode> traverse(TraversalDescription traversal) {
         return new GoddageNodeWrappingIterable(traversal.traverse(node).nodes());
     }
@@ -205,38 +193,38 @@ public abstract class GoddagNode {
         if (before == null) {
             final GoddagNode lastChild = getLastChild(root);
             if (lastChild != null) {
-                GoddagNodeEdge.add(SIBLING_AXIS, lastChild.node, newChild.node, rootId);
-                GoddagNodeEdge.remove(lastChild.node.getRelationships(LAST_CHILD, OUTGOING), rootId);
+                GoddagEdge.add(EdgeType.HAS_SIBLING, lastChild.node, newChild.node, rootId);
+                GoddagEdge.remove(lastChild.node.getRelationships(EdgeType.IS_LAST_CHILD_OF, OUTGOING), rootId);
             }
-            GoddagNodeEdge.add(LAST_CHILD, newChild.node, node, rootId);
+            GoddagEdge.add(EdgeType.IS_LAST_CHILD_OF, newChild.node, node, rootId);
             
             final GoddagNode firstChild = getFirstChild(root);
             if (firstChild == null) {
-                GoddagNodeEdge.add(FIRST_CHILD, node, newChild.node, rootId);
+                GoddagEdge.add(EdgeType.HAS_FIRST_CHILD, node, newChild.node, rootId);
             }
         } else {
             Node prevNode = null;
             
-            final Relationship prevRel = GoddagNodeEdge.find(before.node.getRelationships(SIBLING_AXIS, INCOMING), rootId);
+            final Relationship prevRel = GoddagEdge.find(before.node.getRelationships(EdgeType.HAS_SIBLING, INCOMING), rootId);
             if (prevRel != null) {
                 prevNode = prevRel.getStartNode();
-                GoddagNodeEdge.remove(Collections.singleton(prevRel), rootId);
+                GoddagEdge.remove(Collections.singleton(prevRel), rootId);
             }
 
-            GoddagNodeEdge.add(SIBLING_AXIS, newChild.node, before.node, rootId);
+            GoddagEdge.add(EdgeType.HAS_SIBLING, newChild.node, before.node, rootId);
 
             if (prevNode != null) {
-                GoddagNodeEdge.add(SIBLING_AXIS, prevNode, newChild.node, rootId);
+                GoddagEdge.add(EdgeType.HAS_SIBLING, prevNode, newChild.node, rootId);
             } else {
-                final Relationship firstRel = GoddagNodeEdge.find(node.getRelationships(FIRST_CHILD, OUTGOING), rootId);
+                final Relationship firstRel = GoddagEdge.find(node.getRelationships(EdgeType.HAS_FIRST_CHILD, OUTGOING), rootId);
                 if (firstRel != null) {
-                    GoddagNodeEdge.remove(Collections.singleton(firstRel), rootId);
+                    GoddagEdge.remove(Collections.singleton(firstRel), rootId);
                 }
-                GoddagNodeEdge.add(FIRST_CHILD, node, newChild.node, rootId);
+                GoddagEdge.add(EdgeType.HAS_FIRST_CHILD, node, newChild.node, rootId);
             }
         }
         
-        GoddagNodeEdge.add(DESCENDANT_AXIS, node, newChild.node, rootId);
+        GoddagEdge.add(EdgeType.CONTAINS, node, newChild.node, rootId);
 
         return newChild;
     }
@@ -262,33 +250,33 @@ public abstract class GoddagNode {
         assert equals(toRemove.getParent(root));
 
         final long rootId = root.node.getId();
-        final Relationship prev = GoddagNodeEdge.find(toRemove.node.getRelationships(SIBLING_AXIS, INCOMING), rootId);
-        final Relationship next = GoddagNodeEdge.find(toRemove.node.getRelationships(SIBLING_AXIS, OUTGOING), rootId);
+        final Relationship prev = GoddagEdge.find(toRemove.node.getRelationships(EdgeType.HAS_SIBLING, INCOMING), rootId);
+        final Relationship next = GoddagEdge.find(toRemove.node.getRelationships(EdgeType.HAS_SIBLING, OUTGOING), rootId);
         
         if (prev != null && next != null) {
-            GoddagNodeEdge.add(SIBLING_AXIS, prev.getStartNode(), next.getEndNode(), rootId);
+            GoddagEdge.add(EdgeType.HAS_SIBLING, prev.getStartNode(), next.getEndNode(), rootId);
         }
         Node prevNode = null;
         if (prev != null) {
             prevNode = prev.getStartNode();
-            GoddagNodeEdge.remove(Collections.singleton(prev), rootId);
+            GoddagEdge.remove(Collections.singleton(prev), rootId);
         } else {
-            GoddagNodeEdge.remove(toRemove.node.getRelationships(FIRST_CHILD, INCOMING), rootId);
+            GoddagEdge.remove(toRemove.node.getRelationships(EdgeType.HAS_FIRST_CHILD, INCOMING), rootId);
             if (next != null) {
-                GoddagNodeEdge.add(FIRST_CHILD, node, next.getEndNode(), rootId);
+                GoddagEdge.add(EdgeType.HAS_FIRST_CHILD, node, next.getEndNode(), rootId);
             }
         }
 
         if (next != null) {
-            GoddagNodeEdge.remove(Collections.singleton(next), rootId);
+            GoddagEdge.remove(Collections.singleton(next), rootId);
         } else {
-            GoddagNodeEdge.remove(toRemove.node.getRelationships(LAST_CHILD, OUTGOING), rootId);
+            GoddagEdge.remove(toRemove.node.getRelationships(EdgeType.IS_LAST_CHILD_OF, OUTGOING), rootId);
             if (prevNode != null) {
-                GoddagNodeEdge.add(LAST_CHILD, prevNode, node, rootId);
+                GoddagEdge.add(EdgeType.IS_LAST_CHILD_OF, prevNode, node, rootId);
             }
         }
 
-        GoddagNodeEdge.remove(toRemove.node.getRelationships(DESCENDANT_AXIS, INCOMING), rootId);
+        GoddagEdge.remove(toRemove.node.getRelationships(EdgeType.CONTAINS, INCOMING), rootId);
     }
 
     public boolean delete(Element root) {
@@ -338,11 +326,11 @@ public abstract class GoddagNode {
         return "<" + PREFIX + "/> " + node.toString();
     }
 
-    protected static GoddagNodeType getNodeType(Node node) {
-        return (GoddagNodeType) NODE_TYPES[(Integer) node.getProperty(NODE_TYPE_PROPERTY)];
+    protected static NodeType getNodeType(Node node) {
+        return (NodeType) NODE_TYPES[(Integer) node.getProperty(NODE_TYPE_PROPERTY)];
     }
 
-    protected void setNodeType(GoddagNodeType nodeType) {
+    protected void setNodeType(NodeType nodeType) {
         node.setProperty(NODE_TYPE_PROPERTY, nodeType.ordinal());
     }
 
@@ -367,7 +355,7 @@ public abstract class GoddagNode {
     }
 
     public static GoddagNode wrap(Node node) {
-        final GoddagNodeType nodeType = getNodeType(node);
+        final NodeType nodeType = getNodeType(node);
         switch (nodeType) {
         case TEXT:
             return new Text(node);

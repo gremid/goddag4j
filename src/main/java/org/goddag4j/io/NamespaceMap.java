@@ -50,7 +50,7 @@ public class NamespaceMap extends HashMap<URI, String> {
         put(URI.create(GODDAG_NS_URI), GODDAG_NS_PREFIX);
     }
 
-    public static final Map<URI, String> EMPTY_MAP = new HashMap<URI, String>();
+    public static final Map<URI, String> EMPTY = new HashMap<URI, String>();
     
     public static final Map<URI, String> TEI_MAP = new NamespaceMap();
 

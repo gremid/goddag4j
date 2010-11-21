@@ -28,22 +28,16 @@ public class Comment extends GoddagNode {
 
     private static final String PREFIX = GoddagNode.PREFIX + ".comment";
 
-    protected Comment(Node node) {
+    public Comment(Node node) {
         super(node);
     }
 
-    public static Comment create(GraphDatabaseService db, String content) {
-        Comment comment = new Comment(db.createNode());
-        comment.setNodeType(GoddagNodeType.COMMENT);
-        comment.setContent(content);
-        return comment;
+    public Comment(GraphDatabaseService db, String content) {
+        this(db.createNode());
+        setNodeType(NodeType.COMMENT);
+        setContent(content);
     }
 
-    @Override
-    public void stream(Element root, GoddagEventHandler handler) {
-        handler.comment(this);
-    }
-    
     @Override
     public String getText(Element root) {
         return "";

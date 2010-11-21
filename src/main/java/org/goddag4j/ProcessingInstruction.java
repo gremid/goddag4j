@@ -28,21 +28,15 @@ public class ProcessingInstruction extends GoddagNode {
 
     public static final String PREFIX = GoddagNode.PREFIX + ".pi";
 
-    protected ProcessingInstruction(Node node) {
+    public ProcessingInstruction(Node node) {
         super(node);
     }
 
-    public static ProcessingInstruction create(GraphDatabaseService db, String target, String instruction) {
-        ProcessingInstruction pi = new ProcessingInstruction(db.createNode());
-        pi.setNodeType(GoddagNodeType.PI);
-        pi.setTarget(target);
-        pi.setInstruction(instruction);
-        return pi;
-    }
-
-    @Override
-    public void stream(Element root, GoddagEventHandler handler) {
-        handler.processingInstruction(this);
+    public ProcessingInstruction(GraphDatabaseService db, String target, String instruction) {
+        this(db.createNode());
+        setNodeType(NodeType.PI);
+        setTarget(target);
+        setInstruction(instruction);
     }
 
     @Override

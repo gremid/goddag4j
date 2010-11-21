@@ -21,15 +21,14 @@
 
 package org.goddag4j.io;
 
-import static org.goddag4j.GoddagNodeEdge.DESCENDANT_AXIS;
-
 import javax.xml.XMLConstants;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamWriter;
 
 import org.goddag4j.Element;
 import org.goddag4j.GoddagNode;
-import org.goddag4j.GoddagNodeType;
+import org.goddag4j.GoddagEdge.EdgeType;
+import org.goddag4j.GoddagNode.NodeType;
 import org.goddag4j.Text;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
@@ -37,15 +36,18 @@ import org.neo4j.graphdb.traversal.TraversalDescription;
 import org.neo4j.kernel.Traversal;
 import org.neo4j.kernel.Uniqueness;
 
-public class GraphMLSerializer {
+public class GoddagGraphMLWriter {
 
     private static final String GRAPHML_XSD_LOCATION = "http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd";
     private static final String GRAPHML_NS = "http://graphml.graphdrawing.org/xmlns";
-    protected XMLStreamWriter out;
+    
+    private final XMLStreamWriter out;
 
-    public void write(XMLStreamWriter out, GoddagNode start) throws XMLStreamException {
+    public GoddagGraphMLWriter(XMLStreamWriter out) {
         this.out = out;
-
+    }
+    
+    public void write(GoddagNode start) throws XMLStreamException {
         out.writeStartDocument();
 
         out.writeStartElement("graphml");
@@ -107,7 +109,7 @@ public class GraphMLSerializer {
         out.writeStartElement("node");
         out.writeAttribute("id", getNodeId(node.node));
 
-        final GoddagNodeType nt = node.getNodeType();
+        final NodeType nt = node.getNodeType();
 
         out.writeStartElement("data");
         out.writeAttribute("key", "nt");
@@ -156,6 +158,6 @@ public class GraphMLSerializer {
     }
 
     protected TraversalDescription createTraversalDescription() {
-        return Traversal.description().relationships(DESCENDANT_AXIS);
+        return Traversal.description().relationships(EdgeType.CONTAINS);
     }
 }
