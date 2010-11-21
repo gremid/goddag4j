@@ -7,6 +7,11 @@
 	<packaging>jar</packaging>
 	<name>GODDAG for Java</name>
 	<description>Java implementation of the GODDAG data model to express document structures including overlapping markup.</description>
+	<url>https://launchpad.net/goddag4j</url>
+	<organization>
+		<name>Gregor Middell</name>
+		<url>http://gregor.middell.net/</url>
+	</organization>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
@@ -46,6 +51,78 @@
 					<encoding>UTF-8</encoding>
 				</configuration>
 			</plugin>
+			<plugin>
+				<artifactId>maven-source-plugin</artifactId>
+				<version>2.1.2</version>
+				<executions>
+					<execution>
+						<id>install-sources</id>
+						<goals>
+							<goal>jar-no-fork</goal>
+						</goals>
+						<phase>install</phase>
+					</execution>
+					<execution>
+						<id>deploy-sources</id>
+						<goals>
+							<goal>jar-no-fork</goal>
+						</goals>
+						<phase>deploy</phase>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>com.mycila.maven-license-plugin</groupId>
+				<artifactId>maven-license-plugin</artifactId>
+				<version>1.8.0</version>
+				<configuration>
+					<header>HEADER</header>
+					<strictCheck>true</strictCheck>
+					<encoding>UTF-8</encoding>
+					<excludes>
+						<exclude>.bzrignore</exclude>
+						<exclude>HEADER</exclude>
+						<exclude>LICENSE</exclude>
+						<exclude>NOTICE</exclude>
+						<exclude>README</exclude>
+						<exclude>**/*.apt</exclude>
+						<exclude>src/test/resources/**</exclude>
+						<exclude>target/**</exclude>
+					</excludes>
+					<properties>
+						<year>2010</year>
+					</properties>
+				</configuration>
+			</plugin>
 		</plugins>
 	</build>
+	<developers>
+		<developer>
+			<name>Gregor Middell</name>
+			<url>http://gregor.middell.net/</url>
+			<organization>Universität Würzburg</organization>
+			<organizationUrl>http://www.digital-humanities.de/</organizationUrl>
+		</developer>
+	</developers>
+	<licenses>
+		<license>
+			<name>GNU General Public License</name>
+			<url>http://www.gnu.org/licenses/gpl.txt</url>
+			<distribution>repo</distribution>
+		</license>
+	</licenses>
+	<issueManagement>
+		<system>Launchpad</system>
+		<url>https://bugs.launchpad.net/goddag4j</url>
+	</issueManagement>
+	<distributionManagement>
+		<repository>
+			<id>dh-releases</id>
+			<url>http://maven.middell.com/nexus/content/repositories/dh-releases</url>
+		</repository>
+		<snapshotRepository>
+			<id>dh-snapshots</id>
+			<url>http://maven.middell.com/nexus/content/repositories/dh-snapshots</url>
+		</snapshotRepository>
+	</distributionManagement>
 </project>
