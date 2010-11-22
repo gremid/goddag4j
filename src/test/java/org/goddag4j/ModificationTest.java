@@ -32,7 +32,7 @@ import org.goddag4j.Text;
 import org.junit.Test;
 import org.neo4j.helpers.collection.IteratorUtil;
 
-public class ChildModificationTest extends BaseTest {
+public class ModificationTest extends GraphDatabaseTestContext {
     @Test
     public void addAndRemove() {
         for (int i = 0; i < 10; i++) {
@@ -46,7 +46,7 @@ public class ChildModificationTest extends BaseTest {
         Assert.assertEquals(10, elements.size());
         for (int i = 0; i < 10; i++) {
             if (i % 2 == 0) {
-                root.remove(root, elements.get(i));
+                root.remove(root, elements.get(i), true);
             }
         }
         Assert.assertEquals(5, IteratorUtil.count(root.getChildren(root).iterator()));
@@ -79,7 +79,8 @@ public class ChildModificationTest extends BaseTest {
         IteratorUtil.addToCollection(root.getChildren(root).iterator(), nodes);
         for (int i = 0; i < 10; i++) {
             if (i % 2 == 0) {
-                nodes.get(i).delete(root);
+                final GoddagNode child = nodes.get(i);
+                child.getParent(root).remove(root, child, true);
             }
         }
         Assert.assertEquals(5, IteratorUtil.count(root.getChildren(root).iterator()));

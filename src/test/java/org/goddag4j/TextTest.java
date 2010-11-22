@@ -28,7 +28,7 @@ import org.goddag4j.GoddagEdge.EdgeType;
 import org.junit.Test;
 import org.neo4j.helpers.collection.IteratorUtil;
 
-public class GoddagTest extends BaseTest {
+public class TextTest extends GraphDatabaseTestContext {
 
     @Test
     public void splitContent() {

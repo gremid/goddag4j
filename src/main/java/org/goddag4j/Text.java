@@ -85,7 +85,7 @@ public class Text extends GoddagNode {
             for (Text segment : segments) {
                 parent.insert(root, segment, this);
             }
-            delete(root);
+            parent.remove(root, this, false);
         }
         return segments.toArray(new Text[0]);
     }

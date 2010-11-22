@@ -19,14 +19,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.goddag4j;
+package org.goddag4j.io;
 
 import javax.xml.stream.XMLOutputFactory;
 
+import org.goddag4j.GraphDatabaseTestContext;
 import org.goddag4j.io.GoddagGraphMLWriter;
 import org.junit.Test;
 
-public class GraphMLTest extends BaseTest {
+public class GraphMLTest extends GraphDatabaseTestContext {
 
     @Test
     public void serialize() throws Exception {

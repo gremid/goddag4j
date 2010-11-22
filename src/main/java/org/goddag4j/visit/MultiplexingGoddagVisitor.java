@@ -36,36 +36,36 @@ public class MultiplexingGoddagVisitor extends GoddagVisitor {
 
     @Override
     public void startElement(Element root, Element element) {
-        for (GoddagVisitor handler : visitors) {
-            handler.startElement(root, element);
+        for (GoddagVisitor visitor : visitors) {
+            visitor.startElement(root, element);
         }
     }
 
     @Override
     public void endElement(Element root, Element element) {
-        for (GoddagVisitor handler : visitors) {
-            handler.endElement(root, element);
+        for (GoddagVisitor visitor : visitors) {
+            visitor.endElement(root, element);
         }
     }
 
     @Override
     public void text(Element root, Text text) {
-        for (GoddagVisitor handler : visitors) {
-            handler.text(root, text);
+        for (GoddagVisitor visitor : visitors) {
+            visitor.text(root, text);
         }
     }
 
     @Override
     public void comment(Element root, Comment comment) {
-        for (GoddagVisitor handler : visitors) {
-            handler.comment(root, comment);
+        for (GoddagVisitor visitor : visitors) {
+            visitor.comment(root, comment);
         }
     }
 
     @Override
     public void processingInstruction(Element root, ProcessingInstruction pi) {
-        for (GoddagVisitor handler : visitors) {
-            handler.processingInstruction(root, pi);
+        for (GoddagVisitor visitor : visitors) {
+            visitor.processingInstruction(root, pi);
         }
     }
 

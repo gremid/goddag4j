@@ -21,8 +21,8 @@
 
 package org.goddag4j;
 
+import static org.goddag4j.GoddagEdge.EdgeType.HAS_ATTRIBUTE;
 import static org.neo4j.graphdb.Direction.INCOMING;
-import static org.neo4j.graphdb.Direction.OUTGOING;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,7 +30,6 @@ import java.util.List;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
-import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.helpers.collection.IterableWrapper;
 
 public class Element extends GoddagNode {
@@ -49,7 +48,7 @@ public class Element extends GoddagNode {
     }
 
     public Iterable<Attribute> getAttributes() {
-        return new IterableWrapper<Attribute, Relationship>(node.getRelationships(ATTRIBUTE)) {
+        return new IterableWrapper<Attribute, Relationship>(node.getRelationships(HAS_ATTRIBUTE)) {
 
             @Override
             protected Attribute underlyingObjectToObject(Relationship object) {
@@ -77,7 +76,7 @@ public class Element extends GoddagNode {
         Attribute attr = getAttribute(attributePrefix, attributeName);
         if (attr == null) {
             final Node attrNode = node.getGraphDatabase().createNode();
-            node.createRelationshipTo(attrNode, ATTRIBUTE);
+            node.createRelationshipTo(attrNode, HAS_ATTRIBUTE);
 
             attr = new Attribute(attrNode);
             attr.setPrefix(attributePrefix);
@@ -102,7 +101,7 @@ public class Element extends GoddagNode {
         }
 
         final Node node = toDelete.node;
-        node.getSingleRelationship(ATTRIBUTE, INCOMING).delete();
+        node.getSingleRelationship(HAS_ATTRIBUTE, INCOMING).delete();
         node.delete();
     }
 
@@ -123,21 +122,27 @@ public class Element extends GoddagNode {
     }
 
     @Override
-    public boolean delete(Element root) {
-        if (super.delete(root)) {
-            List<Relationship> toDelete = new ArrayList<Relationship>();
-            for (Relationship attrRel : node.getRelationships(ATTRIBUTE, OUTGOING)) {
-                toDelete.add(attrRel);
-            }
-            for (Relationship r : toDelete) {
-                r.delete();
-                r.getEndNode().delete();
-            }
-            return true;
-        }
-        return false;
+    public void remove(Element root, GoddagNode toRemove, boolean recursive) {
+        super.remove(root, toRemove, recursive);
+        delete();
     }
 
+    public void delete() {
+        final List<Relationship> attrRels = new ArrayList<Relationship>();
+        for (Relationship r : node.getRelationships()) {
+            if (r.getType().equals(HAS_ATTRIBUTE)) {
+                attrRels.add(r);
+            } else {
+                return;
+            }
+        }
+        for (Relationship attrRel : attrRels) {
+            attrRel.getEndNode().delete();
+            attrRel.delete();
+        }
+        node.delete();        
+    }
+    
     public static String getQName(String prefix, String name) {
         return (prefix == null || prefix.length() == 0 ? "" : prefix + ":") + name;
     }
@@ -150,12 +155,4 @@ public class Element extends GoddagNode {
     public String toString() {
         return "<" + PREFIX + " '" + getQName() + "'/> " + node.toString();
     }
-
-    protected static final RelationshipType ATTRIBUTE = new RelationshipType() {
-
-        public String name() {
-            return GoddagNode.PREFIX + ".attr";
-        }
-    };
-
 }

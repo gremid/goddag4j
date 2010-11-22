@@ -181,52 +181,53 @@ public abstract class GoddagNode {
         }
     }
 
-    public GoddagNode insert(Element root, GoddagNode newChild, GoddagNode before) {
+    public GoddagNode insert(Element root, GoddagNode child, GoddagNode before) {
         assert (before == null || equals(before.getParent(root)));
 
-        final GoddagNode prevParent = newChild.getParent(root);
+        final GoddagNode prevParent = child.getParent(root);
         if (prevParent != null) {
-            prevParent.remove(root, newChild);
+            prevParent.unlink(root, child);
         }
-
+        
         final long rootId = root.node.getId();
+        
         if (before == null) {
             final GoddagNode lastChild = getLastChild(root);
             if (lastChild != null) {
-                GoddagEdge.add(EdgeType.HAS_SIBLING, lastChild.node, newChild.node, rootId);
+                GoddagEdge.add(EdgeType.HAS_SIBLING, lastChild.node, child.node, rootId);
                 GoddagEdge.remove(lastChild.node.getRelationships(EdgeType.IS_LAST_CHILD_OF, OUTGOING), rootId);
             }
-            GoddagEdge.add(EdgeType.IS_LAST_CHILD_OF, newChild.node, node, rootId);
-            
+            GoddagEdge.add(EdgeType.IS_LAST_CHILD_OF, child.node, node, rootId);
+
             final GoddagNode firstChild = getFirstChild(root);
             if (firstChild == null) {
-                GoddagEdge.add(EdgeType.HAS_FIRST_CHILD, node, newChild.node, rootId);
+                GoddagEdge.add(EdgeType.HAS_FIRST_CHILD, node, child.node, rootId);
             }
         } else {
             Node prevNode = null;
-            
+
             final Relationship prevRel = GoddagEdge.find(before.node.getRelationships(EdgeType.HAS_SIBLING, INCOMING), rootId);
             if (prevRel != null) {
                 prevNode = prevRel.getStartNode();
                 GoddagEdge.remove(Collections.singleton(prevRel), rootId);
             }
 
-            GoddagEdge.add(EdgeType.HAS_SIBLING, newChild.node, before.node, rootId);
+            GoddagEdge.add(EdgeType.HAS_SIBLING, child.node, before.node, rootId);
 
             if (prevNode != null) {
-                GoddagEdge.add(EdgeType.HAS_SIBLING, prevNode, newChild.node, rootId);
+                GoddagEdge.add(EdgeType.HAS_SIBLING, prevNode, child.node, rootId);
             } else {
                 final Relationship firstRel = GoddagEdge.find(node.getRelationships(EdgeType.HAS_FIRST_CHILD, OUTGOING), rootId);
                 if (firstRel != null) {
                     GoddagEdge.remove(Collections.singleton(firstRel), rootId);
                 }
-                GoddagEdge.add(EdgeType.HAS_FIRST_CHILD, node, newChild.node, rootId);
+                GoddagEdge.add(EdgeType.HAS_FIRST_CHILD, node, child.node, rootId);
             }
         }
-        
-        GoddagEdge.add(EdgeType.CONTAINS, node, newChild.node, rootId);
 
-        return newChild;
+        GoddagEdge.add(EdgeType.CONTAINS, node, child.node, rootId);
+
+        return child;
     }
 
     public void merge(Element root, GoddagNode toMerge) {
@@ -242,17 +243,34 @@ public abstract class GoddagNode {
         }
         final GoddagNode parent = toMerge.getParent(root);
         if (parent != null) {
-            parent.remove(root, toMerge);
+            parent.remove(root, toMerge, false);
         }
     }
 
-    public void remove(Element root, GoddagNode toRemove) {
-        assert equals(toRemove.getParent(root));
+    public void remove(Element root, GoddagNode child, boolean recursive) {
+        assert equals(child.getParent(root));
 
-        final long rootId = root.node.getId();
-        final Relationship prev = GoddagEdge.find(toRemove.node.getRelationships(EdgeType.HAS_SIBLING, INCOMING), rootId);
-        final Relationship next = GoddagEdge.find(toRemove.node.getRelationships(EdgeType.HAS_SIBLING, OUTGOING), rootId);
+        if (recursive) {
+            GoddagNode nextChild = child.getFirstChild(root);
+            while (nextChild != null) {
+                GoddagNode current = nextChild;
+                nextChild = nextChild.getNextSibling(root);
+                child.remove(root, current, true);
+            }
+        }
+
+        unlink(root, child);
         
+        if (!node.hasRelationship()) {
+            node.delete();
+        }
+    }
+
+    private void unlink(Element root, GoddagNode child) {
+        final long rootId = root.node.getId();
+        final Relationship prev = GoddagEdge.find(child.node.getRelationships(EdgeType.HAS_SIBLING, INCOMING), rootId);
+        final Relationship next = GoddagEdge.find(child.node.getRelationships(EdgeType.HAS_SIBLING, OUTGOING), rootId);
+
         if (prev != null && next != null) {
             GoddagEdge.add(EdgeType.HAS_SIBLING, prev.getStartNode(), next.getEndNode(), rootId);
         }
@@ -261,7 +279,7 @@ public abstract class GoddagNode {
             prevNode = prev.getStartNode();
             GoddagEdge.remove(Collections.singleton(prev), rootId);
         } else {
-            GoddagEdge.remove(toRemove.node.getRelationships(EdgeType.HAS_FIRST_CHILD, INCOMING), rootId);
+            GoddagEdge.remove(child.node.getRelationships(EdgeType.HAS_FIRST_CHILD, INCOMING), rootId);
             if (next != null) {
                 GoddagEdge.add(EdgeType.HAS_FIRST_CHILD, node, next.getEndNode(), rootId);
             }
@@ -270,40 +288,20 @@ public abstract class GoddagNode {
         if (next != null) {
             GoddagEdge.remove(Collections.singleton(next), rootId);
         } else {
-            GoddagEdge.remove(toRemove.node.getRelationships(EdgeType.IS_LAST_CHILD_OF, OUTGOING), rootId);
+            GoddagEdge.remove(child.node.getRelationships(EdgeType.IS_LAST_CHILD_OF, OUTGOING), rootId);
             if (prevNode != null) {
                 GoddagEdge.add(EdgeType.IS_LAST_CHILD_OF, prevNode, node, rootId);
             }
         }
 
-        GoddagEdge.remove(toRemove.node.getRelationships(EdgeType.CONTAINS, INCOMING), rootId);
+        GoddagEdge.remove(child.node.getRelationships(EdgeType.CONTAINS, INCOMING), rootId);
     }
-
-    public boolean delete(Element root) {
-        GoddagNode nextChild = getFirstChild(root);
-        while (nextChild != null) {
-            GoddagNode current = nextChild;
-            nextChild = nextChild.getNextSibling(root);
-            current.delete(root);
-        }
-
-        GoddagNode parent = getParent(root);
-        if (parent != null) {
-            parent.remove(root, this);
-        }
-
-        if (!node.hasRelationship()) {
-            node.delete();
-            return true;
-        }
-        return false;
-    }
-
+    
     public void clear(Element root) {
         GoddagNode child = getFirstChild(root);
         while (child != null) {
             GoddagNode next = child.getNextSibling(root);
-            child.delete(root);
+            remove(root, child, true);
             child = next;
         }
     }

@@ -33,7 +33,7 @@ import org.neo4j.graphdb.RelationshipType;
 
 public class GoddagEdge {
     public enum EdgeType implements RelationshipType {
-        HAS_FIRST_CHILD, IS_LAST_CHILD_OF, HAS_SIBLING, CONTAINS
+        HAS_FIRST_CHILD, IS_LAST_CHILD_OF, HAS_SIBLING, CONTAINS, HAS_ATTRIBUTE        
     }
 
     public static final String ROOT_PROPERTY = GoddagNode.PREFIX + ".root";

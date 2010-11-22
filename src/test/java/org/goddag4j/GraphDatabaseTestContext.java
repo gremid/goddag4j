@@ -23,6 +23,7 @@ package org.goddag4j;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.logging.Logger;
 
 import org.codehaus.jackson.JsonEncoding;
 import org.codehaus.jackson.JsonFactory;
@@ -41,9 +42,10 @@ import org.neo4j.kernel.EmbeddedGraphDatabase;
 import com.google.common.base.Preconditions;
 import com.google.common.io.Files;
 
-public abstract class BaseTest {
+public abstract class GraphDatabaseTestContext {
     private static final File GRAPH_DIR = new File(System.getProperty("java.io.tmpdir", System.getProperty("user.dir", ".")),
             "goddag-test-db");
+    protected static final Logger log = Logger.getLogger(GraphDatabaseTestContext.class.getName());
     protected static GraphDatabaseService db;
 
     protected Transaction transaction;
@@ -57,7 +59,10 @@ public abstract class BaseTest {
             Preconditions.checkState(graphRootDir.isDirectory(), graphRootDir + " is not a directory");
             Files.deleteRecursively(graphRootDir);
         }
-        db = new EmbeddedGraphDatabase(graphRootDir.getAbsolutePath());
+        
+        final String graphRootDirPath = graphRootDir.getAbsolutePath();
+        log.info("Firing up test graph database in " + graphRootDirPath);
+        db = new EmbeddedGraphDatabase(graphRootDirPath);
     }
 
     @AfterClass

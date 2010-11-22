@@ -21,21 +21,20 @@
 
 package org.goddag4j.io;
 
-import java.net.URL;
 import java.util.Collections;
 
-import org.goddag4j.BaseTest;
 import org.goddag4j.Element;
+import org.goddag4j.GraphDatabaseTestContext;
 import org.junit.Assert;
 import org.junit.Test;
 import org.xml.sax.InputSource;
 
-public class GoddagBuildingTest extends BaseTest {
-    private static final URL TEST_XML_RESOURCE = GoddagBuildingTest.class.getResource("/george-algabal-tei.xml");
+public class XMLTest extends GraphDatabaseTestContext {
+    private final InputSource xml = new InputSource(getClass().getResource("/george-algabal-tei.xml").toString());
 
     @Test
-    public void build() throws Exception {
-        final Element algabal = new GoddagXMLReader(db, NamespaceMap.TEI_MAP).parse(new InputSource(TEST_XML_RESOURCE.toString()));
+    public void read() throws Exception {
+        final Element algabal = new GoddagXMLReader(db, NamespaceMap.TEI_MAP).parse(xml);
         this.root.insert(this.root, algabal, null);
         
         Assert.assertNotNull(algabal);

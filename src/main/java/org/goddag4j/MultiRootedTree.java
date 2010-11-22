@@ -81,13 +81,14 @@ public class MultiRootedTree implements Iterable<Element> {
     }
 
     public void delete() {
-        List<Relationship> relationships = new ArrayList<Relationship>();
-        IteratorUtil.addToCollection(node.getRelationships(rootRelation, OUTGOING).iterator(), relationships);
+        final List<Relationship> rootRels = new ArrayList<Relationship>();
+        IteratorUtil.addToCollection(node.getRelationships(rootRelation, OUTGOING).iterator(), rootRels);
 
-        for (Relationship r : relationships) {
-            final Element root = (Element) GoddagNode.wrap(r.getEndNode());
-            r.delete();
-            root.delete(root);
+        for (Relationship rootRel : rootRels) {
+            final Element root = (Element) GoddagNode.wrap(rootRel.getEndNode());
+            root.clear(root);
+            root.delete();            
+            rootRel.delete();
         }
     }
 
