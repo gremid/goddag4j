@@ -33,12 +33,14 @@ public class XMLTest extends GraphDatabaseTestContext {
     private final InputSource xml = new InputSource(getClass().getResource("/george-algabal-tei.xml").toString());
 
     @Test
-    public void read() throws Exception {
+    public void readWrite() throws Exception {
         final Element algabal = new GoddagXMLReader(db, NamespaceMap.TEI_MAP).parse(xml);
         this.root.insert(this.root, algabal, null);
         
         Assert.assertNotNull(algabal);
         Assert.assertTrue(algabal.getDescendants(algabal).iterator().hasNext());
         dump(Collections.singleton(algabal));
+        
+        dump(new GoddagXMLWriter(algabal, NamespaceMap.TEI_MAP, true).toSAXSource());
     }
 }

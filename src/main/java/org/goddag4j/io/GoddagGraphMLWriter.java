@@ -21,45 +21,54 @@
 
 package org.goddag4j.io;
 
-import javax.xml.XMLConstants;
-import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.XMLStreamWriter;
+import static javax.xml.XMLConstants.W3C_XML_SCHEMA_INSTANCE_NS_URI;
+import static javax.xml.XMLConstants.XML_NS_URI;
+
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.goddag4j.Element;
+import org.goddag4j.GoddagEdge;
 import org.goddag4j.GoddagNode;
-import org.goddag4j.GoddagEdge.EdgeType;
 import org.goddag4j.GoddagNode.NodeType;
+import org.goddag4j.GoddagTreeNode;
 import org.goddag4j.Text;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.traversal.TraversalDescription;
 import org.neo4j.kernel.Traversal;
 import org.neo4j.kernel.Uniqueness;
+import org.xml.sax.SAXException;
+import org.xml.sax.helpers.AttributesImpl;
 
-public class GoddagGraphMLWriter {
+public class GoddagGraphMLWriter extends BaseXMLReader {
 
     private static final String GRAPHML_XSD_LOCATION = "http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd";
     private static final String GRAPHML_NS = "http://graphml.graphdrawing.org/xmlns";
-    
-    private final XMLStreamWriter out;
 
-    public GoddagGraphMLWriter(XMLStreamWriter out) {
-        this.out = out;
+    private Map<String, String> attrs = new HashMap<String, String>(10);
+    private final GoddagTreeNode start;
+
+    public GoddagGraphMLWriter(GoddagTreeNode start) {
+        this.start = start;
     }
-    
-    public void write(GoddagNode start) throws XMLStreamException {
-        out.writeStartDocument();
 
-        out.writeStartElement("graphml");
-        out.writeDefaultNamespace(GRAPHML_NS);
-        out.writeNamespace("xsi", XMLConstants.W3C_XML_SCHEMA_INSTANCE_NS_URI);
-        out.writeAttribute("xsi:schemaLocation", GRAPHML_NS + " " + GRAPHML_XSD_LOCATION);
+    @Override
+    protected void parse() throws IOException, SAXException {
+        contentHandler.startDocument();
+
+        final AttributesImpl rootAttrs = new AttributesImpl();
+        rootAttrs.addAttribute(XML_NS_URI, "xsi", "xmlns:xsi", "CDATA", W3C_XML_SCHEMA_INSTANCE_NS_URI);
+        rootAttrs.addAttribute(W3C_XML_SCHEMA_INSTANCE_NS_URI, "schemaLocation", "xsi:schemaLocation", "CDATA", GRAPHML_NS + " "
+                + GRAPHML_XSD_LOCATION);
+        contentHandler.startElement(GRAPHML_NS, "graphml", "graphml", rootAttrs);
 
         declareKeys();
 
-        out.writeStartElement("graph");
-        out.writeAttribute("id", "G");
-        out.writeAttribute("edgedefault", "directed");
+        attrs.put("id", "G");
+        attrs.put("edgeDefault", "directed");
+        startElement("graph");
 
         final TraversalDescription td = createTraversalDescription();
         final Node startNode = start.node;
@@ -72,81 +81,103 @@ public class GoddagGraphMLWriter {
             writeEdgeElement(r);
         }
 
-        out.writeEndElement();
+        endElement("graph");
 
-        out.writeEndElement();
+        contentHandler.endElement(GRAPHML_NS, "graphml", "graphml");
 
-        out.writeEndDocument();
+        contentHandler.endDocument();
     }
 
-    protected void declareKeys() throws XMLStreamException {
-        out.writeEmptyElement("key");
-        out.writeAttribute("id", "nt");
-        out.writeAttribute("for", "node");
-        out.writeAttribute("attr.name", "node-type");
-        out.writeAttribute("attr.type", "string");
+    protected void declareKeys() throws IOException, SAXException {
+        attrs.put("id", "nt");
+        attrs.put("for", "node");
+        attrs.put("attr.name", "node-type");
+        attrs.put("attr.type", "string");
+        startElement("key");
+        endElement("key");
 
-        out.writeEmptyElement("key");
-        out.writeAttribute("id", "et");
-        out.writeAttribute("for", "edge");
-        out.writeAttribute("attr.name", "edge-type");
-        out.writeAttribute("attr.type", "string");
+        attrs.put("id", "et");
+        attrs.put("for", "edge");
+        attrs.put("attr.name", "edge-type");
+        attrs.put("attr.type", "string");
+        startElement("key");
+        endElement("key");
 
-        out.writeEmptyElement("key");
-        out.writeAttribute("id", "en");
-        out.writeAttribute("for", "node");
-        out.writeAttribute("attr.name", "element-name");
-        out.writeAttribute("attr.type", "string");
+        attrs.put("id", "en");
+        attrs.put("for", "node");
+        attrs.put("attr.name", "element-name");
+        attrs.put("attr.type", "string");
+        startElement("key");
+        endElement("key");
 
-        out.writeEmptyElement("key");
-        out.writeAttribute("id", "txt");
-        out.writeAttribute("for", "node");
-        out.writeAttribute("attr.name", "text");
-        out.writeAttribute("attr.type", "string");
+        attrs.put("id", "txt");
+        attrs.put("for", "node");
+        attrs.put("attr.name", "text");
+        attrs.put("attr.type", "string");
+        startElement("key");
+        endElement("key");
     }
 
-    protected void writeNodeElement(GoddagNode node) throws XMLStreamException {
-        out.writeStartElement("node");
-        out.writeAttribute("id", getNodeId(node.node));
+    protected void writeNodeElement(GoddagNode node) throws IOException, SAXException {
+        attrs.put("id", getNodeId(node.node));
+        startElement("node");
 
         final NodeType nt = node.getNodeType();
 
-        out.writeStartElement("data");
-        out.writeAttribute("key", "nt");
-        out.writeCharacters(nt.name().toLowerCase());
-        out.writeEndElement();
+        attrs.put("key", "nt");
+        startElement("data");
+        text(nt.name().toLowerCase());
+        endElement("data");
 
         switch (nt) {
         case ELEMENT:
-            out.writeStartElement("data");
-            out.writeAttribute("key", "en");
-            out.writeCharacters(((Element) node).getQName());
-            out.writeEndElement();
+            attrs.put("key", "en");
+            startElement("data");
+            text(((Element) node).getQName());
+            endElement("data");
             break;
         case TEXT:
-            out.writeStartElement("data");
-            out.writeAttribute("key", "txt");
-            out.writeCharacters(((Text) node).getText());
-            out.writeEndElement();
+            attrs.put("key", "text");
+            startElement("data");
+            text(((Text) node).getText());
+            endElement("data");
             break;
 
         }
 
-        out.writeEndElement();
+        endElement("node");
     }
 
-    protected void writeEdgeElement(Relationship r) throws XMLStreamException {
-        out.writeStartElement("edge");
-        out.writeAttribute("id", getEdgeId(r));
-        out.writeAttribute("source", getNodeId(r.getStartNode()));
-        out.writeAttribute("target", getNodeId(r.getEndNode()));
+    protected void writeEdgeElement(Relationship r) throws IOException, SAXException {
+        attrs.put("id", getEdgeId(r));
+        attrs.put("source", getNodeId(r.getStartNode()));
+        attrs.put("target", getNodeId(r.getEndNode()));
+        startElement("edge");
 
-        out.writeStartElement("data");
-        out.writeAttribute("key", "et");
-        out.writeCharacters(r.getType().name().toLowerCase());
-        out.writeEndElement();
+        attrs.put("key", "et");
+        startElement("data");
+        text(r.getType().name().toLowerCase());
+        endElement("data");
 
-        out.writeEndElement();
+        endElement("edge");
+    }
+
+    private void startElement(String name) throws SAXException {
+        final AttributesImpl attrs = new AttributesImpl();
+        for (Map.Entry<String, String> attr : this.attrs.entrySet()) {
+            attrs.addAttribute(GRAPHML_NS, attr.getKey(), attr.getKey(), "CDATA", attr.getValue());
+        }
+        this.attrs.clear();
+        contentHandler.startElement(GRAPHML_NS, name, name, attrs);
+    }
+
+    private void endElement(String name) throws SAXException {
+        contentHandler.endElement(GRAPHML_NS, name, name);
+    }
+
+    private void text(String text) throws SAXException {
+        final char[] textBuf = text.toCharArray();
+        contentHandler.characters(textBuf, 0, textBuf.length);
     }
 
     protected String getNodeId(Node node) {
@@ -158,6 +189,6 @@ public class GoddagGraphMLWriter {
     }
 
     protected TraversalDescription createTraversalDescription() {
-        return Traversal.description().relationships(EdgeType.CONTAINS);
+        return Traversal.description().relationships(GoddagEdge.CONTAINS);
     }
 }

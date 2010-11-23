@@ -58,7 +58,7 @@ public class MultiRootedTree implements Iterable<Element> {
 
             @Override
             protected Element underlyingObjectToObject(Relationship object) {
-                return (Element) GoddagNode.wrap(object.getOtherNode(node));
+                return (Element) GoddagTreeNode.wrap(object.getOtherNode(node));
             }
         }.iterator();
     }
@@ -85,7 +85,7 @@ public class MultiRootedTree implements Iterable<Element> {
         IteratorUtil.addToCollection(node.getRelationships(rootRelation, OUTGOING).iterator(), rootRels);
 
         for (Relationship rootRel : rootRels) {
-            final Element root = (Element) GoddagNode.wrap(rootRel.getEndNode());
+            final Element root = (Element) GoddagTreeNode.wrap(rootRel.getEndNode());
             root.clear(root);
             root.delete();            
             rootRel.delete();
@@ -95,7 +95,7 @@ public class MultiRootedTree implements Iterable<Element> {
     public static final RelationshipType ROOT_RELATION = new RelationshipType() {
 
         public String name() {
-            return GoddagNode.PREFIX + ".root";
+            return GoddagTreeNode.PREFIX + ".root";
         }
     };
 }

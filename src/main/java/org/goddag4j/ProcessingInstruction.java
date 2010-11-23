@@ -24,9 +24,9 @@ package org.goddag4j;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
 
-public class ProcessingInstruction extends GoddagNode {
+public class ProcessingInstruction extends GoddagTreeNode {
 
-    public static final String PREFIX = GoddagNode.PREFIX + ".pi";
+    public static final String PREFIX = GoddagTreeNode.PREFIX + ".pi";
 
     public ProcessingInstruction(Node node) {
         super(node);

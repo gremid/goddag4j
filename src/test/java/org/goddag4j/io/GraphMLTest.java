@@ -21,16 +21,13 @@
 
 package org.goddag4j.io;
 
-import javax.xml.stream.XMLOutputFactory;
-
 import org.goddag4j.GraphDatabaseTestContext;
-import org.goddag4j.io.GoddagGraphMLWriter;
 import org.junit.Test;
 
 public class GraphMLTest extends GraphDatabaseTestContext {
 
     @Test
     public void serialize() throws Exception {
-        new GoddagGraphMLWriter(XMLOutputFactory.newInstance().createXMLStreamWriter(System.out)).write(root);
+        dump(new GoddagGraphMLWriter(root).toSAXSource());
     }
 }

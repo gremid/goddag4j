@@ -36,7 +36,7 @@ public class NamespaceMap extends HashMap<URI, String> {
 
     private static final String TEI_NS_PREFIX = "tei";
     private static final String TEI_NS_URI = "http://www.tei-c.org/ns/1.0";
-    
+
     public static final String GODDAG_NS_URI = "http://juxtasoftware.org/goddag/ns";
     public static final String GODDAG_NS_PREFIX = "goddag";
 
@@ -50,9 +50,18 @@ public class NamespaceMap extends HashMap<URI, String> {
         put(URI.create(GODDAG_NS_URI), GODDAG_NS_PREFIX);
     }
 
-    public static final Map<URI, String> EMPTY = new HashMap<URI, String>();
-    
-    public static final Map<URI, String> TEI_MAP = new NamespaceMap();
+    public URI getNamespaceURI(String prefix) {
+        for (Map.Entry<URI, String> mapping : this.entrySet()) {
+            if (mapping.getValue().equals(prefix)) {
+                return mapping.getKey();
+            }
+        }
+        return null;
+    }
+
+    public static final NamespaceMap EMPTY = new NamespaceMap();
+
+    public static final NamespaceMap TEI_MAP = new NamespaceMap();
 
     static {
         TEI_MAP.put(URI.create(TEI_NS_URI), TEI_NS_PREFIX);

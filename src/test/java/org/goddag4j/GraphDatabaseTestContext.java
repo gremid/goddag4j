@@ -25,6 +25,11 @@ import java.io.File;
 import java.io.IOException;
 import java.util.logging.Logger;
 
+import javax.xml.transform.Source;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.stream.StreamResult;
+
 import org.codehaus.jackson.JsonEncoding;
 import org.codehaus.jackson.JsonFactory;
 import org.codehaus.jackson.JsonGenerator;
@@ -98,10 +103,19 @@ public abstract class GraphDatabaseTestContext {
         try {
             new GoddagJSONWriter(NamespaceMap.EMPTY).write(roots, out);
         } finally {
-            out.close();
+            out.flush();
         }
+        System.out.println();
+        System.out.flush();
     }
 
+    protected static void dump(Source source) throws Exception {
+        final Transformer transformer = TransformerFactory.newInstance().newTransformer();
+        transformer.transform(source, new StreamResult(System.out));
+        System.out.println();
+        System.out.flush();
+    }
+    
     protected static final RelationshipType TEST = new RelationshipType() {
 
         public String name() {

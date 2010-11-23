@@ -21,39 +21,28 @@
 
 package org.goddag4j.io;
 
-import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.xml.transform.sax.SAXSource;
-
 import org.goddag4j.Attribute;
+import org.goddag4j.Comment;
 import org.goddag4j.Element;
-import org.goddag4j.GoddagNode;
+import org.goddag4j.GoddagTreeNode;
 import org.goddag4j.ProcessingInstruction;
 import org.goddag4j.Text;
 import org.xml.sax.Attributes;
-import org.xml.sax.ContentHandler;
-import org.xml.sax.DTDHandler;
-import org.xml.sax.EntityResolver;
-import org.xml.sax.ErrorHandler;
-import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
-import org.xml.sax.SAXNotRecognizedException;
-import org.xml.sax.SAXNotSupportedException;
-import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.AttributesImpl;
 
-public class GoddagXMLWriter implements XMLReader {
+public class GoddagXMLWriter extends BaseXMLReader {
 
     private final Element root;
     private final Map<String, String> namespaceMap;
     private final Map<String, String> namespaceReverseMap;
     private final boolean wrapText;
-    private ContentHandler handler;
     private String textNodeElementName;
     private String textNodeIdName;
 
@@ -75,76 +64,21 @@ public class GoddagXMLWriter implements XMLReader {
 
     }
 
-    public SAXSource toSAXSource() {
-        return new SAXSource(this, new InputSource());
-    }
-
-    public boolean getFeature(String name) throws SAXNotRecognizedException, SAXNotSupportedException {
-        return true;
-    }
-
-    public void setFeature(String name, boolean value) throws SAXNotRecognizedException, SAXNotSupportedException {
-    }
-
-    public Object getProperty(String name) throws SAXNotRecognizedException, SAXNotSupportedException {
-        return null;
-    }
-
-    public void setProperty(String name, Object value) throws SAXNotRecognizedException, SAXNotSupportedException {
-    }
-
-    public void setEntityResolver(EntityResolver resolver) {
-    }
-
-    public EntityResolver getEntityResolver() {
-        return null;
-    }
-
-    public void setDTDHandler(DTDHandler handler) {
-    }
-
-    public DTDHandler getDTDHandler() {
-        return null;
-    }
-
-    public void setContentHandler(ContentHandler handler) {
-        this.handler = handler;
-    }
-
-    public ContentHandler getContentHandler() {
-        return handler;
-    }
-
-    public void setErrorHandler(ErrorHandler handler) {
-    }
-
-    public ErrorHandler getErrorHandler() {
-        return null;
-    }
-
-    public void parse(InputSource input) throws IOException, SAXException {
-        parse();
-    }
-
-    public void parse(String systemId) throws IOException, SAXException {
-        parse();
-    }
-
-    private void parse() throws SAXException {
-        if (handler == null) {
+    protected void parse() throws SAXException {
+        if (contentHandler == null) {
             throw new SAXException("No content handler registered");
         }
 
-        handler.startDocument();
+        contentHandler.startDocument();
         for (Map.Entry<String, String> nsMapping : namespaceReverseMap.entrySet()) {
-            handler.startPrefixMapping(nsMapping.getKey(), nsMapping.getValue());
+            contentHandler.startPrefixMapping(nsMapping.getKey(), nsMapping.getValue());
         }
         handleElement(root);
         for (String prefix : namespaceReverseMap.keySet()) {
-            handler.endPrefixMapping(prefix);
+            contentHandler.endPrefixMapping(prefix);
         }
 
-        handler.endDocument();
+        contentHandler.endDocument();
     }
 
     protected void handleElement(Element element) throws SAXException {
@@ -153,9 +87,9 @@ public class GoddagXMLWriter implements XMLReader {
             throw new SAXException("Unregistered namespace prefix: " + element.getPrefix());
         }
 
-        handler.startElement(uri, element.getName(), element.getQName(), new SAXAttributesFacade(element));
+        contentHandler.startElement(uri, element.getName(), element.getQName(), new SAXAttributesFacade(element));
 
-        for (GoddagNode child : element.getChildren(root)) {
+        for (GoddagTreeNode child : element.getChildren(root)) {
             switch (child.getNodeType()) {
             case ELEMENT:
                 handleElement((Element) child);
@@ -166,24 +100,29 @@ public class GoddagXMLWriter implements XMLReader {
                     AttributesImpl atts = new AttributesImpl();
                     atts.addAttribute(NamespaceMap.GODDAG_NS_URI, "id", textNodeIdName, "CDATA",
                             Long.toString(textNode.node.getId()));
-                    handler.startElement(NamespaceMap.GODDAG_NS_URI, "text", textNodeElementName, atts);
+                    contentHandler.startElement(NamespaceMap.GODDAG_NS_URI, "text", textNodeElementName, atts);
                 }
 
                 final char[] text = textNode.getText().toCharArray();
-                handler.characters(text, 0, text.length);
+                contentHandler.characters(text, 0, text.length);
 
                 if (wrapText) {
-                    handler.endElement(NamespaceMap.GODDAG_NS_URI, "text", textNodeElementName);
+                    contentHandler.endElement(NamespaceMap.GODDAG_NS_URI, "text", textNodeElementName);
                 }
                 break;
             case PI:
                 final ProcessingInstruction pi = (ProcessingInstruction) child;
-                handler.processingInstruction(pi.getTarget(), pi.getInstruction());
+                contentHandler.processingInstruction(pi.getTarget(), pi.getInstruction());
                 break;
+            case COMMENT:
+                if (lexicalHandler != null) {
+                    final char[] comment = ((Comment) child).getContent().toCharArray();
+                    lexicalHandler.comment(comment, 0, comment.length);
+                }
             }
         }
 
-        handler.endElement(uri, element.getName(), element.getQName());
+        contentHandler.endElement(uri, element.getName(), element.getQName());
     }
 
     private class SAXAttributesFacade implements Attributes {

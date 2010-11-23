@@ -23,7 +23,7 @@ package org.goddag4j.visit;
 
 import org.goddag4j.Comment;
 import org.goddag4j.Element;
-import org.goddag4j.GoddagNode;
+import org.goddag4j.GoddagTreeNode;
 import org.goddag4j.ProcessingInstruction;
 import org.goddag4j.Text;
 
@@ -31,7 +31,7 @@ public abstract class GoddagVisitor {
 
     public void visit(Element root, Element element) {
         startElement(root, element);
-        for (GoddagNode child : element.getChildren(root)) {
+        for (GoddagTreeNode child : element.getChildren(root)) {
             switch (child.getNodeType()) {
             case TEXT:
                 text(root, (Text) child);

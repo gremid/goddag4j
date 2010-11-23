@@ -24,7 +24,6 @@ package org.goddag4j;
 import static org.neo4j.graphdb.Direction.INCOMING;
 import junit.framework.Assert;
 
-import org.goddag4j.GoddagEdge.EdgeType;
 import org.junit.Test;
 import org.neo4j.helpers.collection.IteratorUtil;
 
@@ -41,11 +40,11 @@ public class TextTest extends GraphDatabaseTestContext {
         for (Element root : roots) {
             root.insert(root, content, null);
         }
-        Assert.assertEquals(roots.length, IteratorUtil.count(content.node.getRelationships(EdgeType.CONTAINS, INCOMING).iterator()));
+        Assert.assertEquals(roots.length, IteratorUtil.count(content.node.getRelationships(GoddagEdge.CONTAINS, INCOMING).iterator()));
 
-        content.split(new Integer[] { 4 });
+        content.split(3, 6);
         for (Element root : roots) {
-            Assert.assertEquals(2, IteratorUtil.count(root.getChildren(root).iterator()));
+            Assert.assertEquals(3, IteratorUtil.count(root.getChildren(root).iterator()));
         }
     }
 }

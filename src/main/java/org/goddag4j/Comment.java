@@ -24,9 +24,9 @@ package org.goddag4j;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
 
-public class Comment extends GoddagNode {
+public class Comment extends GoddagTreeNode {
 
-    private static final String PREFIX = GoddagNode.PREFIX + ".comment";
+    private static final String PREFIX = GoddagTreeNode.PREFIX + ".comment";
 
     public Comment(Node node) {
         super(node);

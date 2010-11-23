@@ -21,15 +21,23 @@
 
 package org.goddag4j;
 
+import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
 
-public class Attribute {
+public class Attribute extends GoddagNode {
 
-    public static final String PREFIX = GoddagNode.PREFIX + ".attr";
-    public final Node node;
+    public static final String PREFIX = GoddagTreeNode.PREFIX + ".attr";
 
     public Attribute(Node node) {
-        this.node = node;
+        super(node);
+    }
+
+    public Attribute(GraphDatabaseService db, String prefix, String name, String value) {
+        this(db.createNode());
+        setNodeType(NodeType.ATTRIBUTE);
+        setPrefix(prefix);
+        setName(name);
+        setValue(value);
     }
 
     public String getPrefix() {
@@ -51,7 +59,7 @@ public class Attribute {
     public String getQName() {
         return Element.getQName(getPrefix(), getName());
     }
-    
+
     public String getValue() {
         return (String) node.getProperty(PREFIX + ".value");
     }

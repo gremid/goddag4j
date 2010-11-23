@@ -32,15 +32,15 @@ import org.codehaus.jackson.JsonGenerator;
 import org.goddag4j.Attribute;
 import org.goddag4j.Comment;
 import org.goddag4j.Element;
-import org.goddag4j.GoddagNode;
 import org.goddag4j.GoddagNode.NodeType;
+import org.goddag4j.GoddagTreeNode;
 import org.goddag4j.ProcessingInstruction;
 import org.goddag4j.Text;
 
 public class GoddagJSONWriter {
 
     private final Map<URI, String> namespaces;
-    private Map<NodeType, Set<GoddagNode>> writeLog = new HashMap<NodeType, Set<GoddagNode>>();
+    private Map<NodeType, Set<GoddagTreeNode>> writeLog = new HashMap<NodeType, Set<GoddagTreeNode>>();
 
     public GoddagJSONWriter(Map<URI, String> namespaces) {
         this.namespaces = namespaces;
@@ -49,7 +49,7 @@ public class GoddagJSONWriter {
     public void write(Iterable<Element> roots, JsonGenerator out) throws IOException {
         writeLog.clear();
         for (NodeType nt : NodeType.values()) {
-            writeLog.put(nt, new HashSet<GoddagNode>());
+            writeLog.put(nt, new HashSet<GoddagTreeNode>());
         }
 
         out.writeStartObject();
@@ -63,7 +63,7 @@ public class GoddagJSONWriter {
         out.writeArrayFieldStart("nodes");
         for (NodeType nt : NodeType.values()) {
             out.writeStartArray();
-            for (GoddagNode node : writeLog.get(nt)) {
+            for (GoddagTreeNode node : writeLog.get(nt)) {
                 writeNode(out, node, nt);
             }
             out.writeEndArray();
@@ -81,7 +81,7 @@ public class GoddagJSONWriter {
         writeLog.clear();
     }
 
-    private void writeTree(JsonGenerator out, Element root, GoddagNode node) throws IOException {
+    private void writeTree(JsonGenerator out, Element root, GoddagTreeNode node) throws IOException {
         final NodeType nt = node.getNodeType();
         writeLog.get(nt).add(node);
 
@@ -90,7 +90,7 @@ public class GoddagJSONWriter {
         out.writeNumberField("nt", nt.ordinal());
         if (node.hasChildren(root)) {
             out.writeArrayFieldStart("ch");
-            for (GoddagNode child : node.getChildren(root)) {
+            for (GoddagTreeNode child : node.getChildren(root)) {
                 writeTree(out, root, child);
             }
             out.writeEndArray();
@@ -98,7 +98,7 @@ public class GoddagJSONWriter {
         out.writeEndObject();
     }
 
-    private void writeNode(JsonGenerator out, GoddagNode node, NodeType nt) throws IOException {
+    private void writeNode(JsonGenerator out, GoddagTreeNode node, NodeType nt) throws IOException {
         out.writeStartArray();
         out.writeNumber(node.node.getId());
 
@@ -131,6 +131,6 @@ public class GoddagJSONWriter {
         out.writeEndArray();
     }
 
-    protected void doWriteNode(JsonGenerator out, GoddagNode node, NodeType nt) {
+    protected void doWriteNode(JsonGenerator out, GoddagTreeNode node, NodeType nt) {
     }
 }

@@ -21,7 +21,6 @@
 
 package org.goddag4j;
 
-import static org.goddag4j.GoddagEdge.EdgeType.HAS_ATTRIBUTE;
 import static org.neo4j.graphdb.Direction.INCOMING;
 
 import java.util.ArrayList;
@@ -32,9 +31,9 @@ import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.helpers.collection.IterableWrapper;
 
-public class Element extends GoddagNode {
+public class Element extends GoddagTreeNode {
 
-    private static final String PREFIX = GoddagNode.PREFIX + ".element";
+    private static final String PREFIX = GoddagTreeNode.PREFIX + ".element";
 
     public Element(Node node) {
         super(node);
@@ -48,7 +47,7 @@ public class Element extends GoddagNode {
     }
 
     public Iterable<Attribute> getAttributes() {
-        return new IterableWrapper<Attribute, Relationship>(node.getRelationships(HAS_ATTRIBUTE)) {
+        return new IterableWrapper<Attribute, Relationship>(node.getRelationships(GoddagEdge.HAS_ATTRIBUTE)) {
 
             @Override
             protected Attribute underlyingObjectToObject(Relationship object) {
@@ -75,12 +74,8 @@ public class Element extends GoddagNode {
     public Attribute setAttribute(String attributePrefix, String attributeName, String attributeValue) {
         Attribute attr = getAttribute(attributePrefix, attributeName);
         if (attr == null) {
-            final Node attrNode = node.getGraphDatabase().createNode();
-            node.createRelationshipTo(attrNode, HAS_ATTRIBUTE);
-
-            attr = new Attribute(attrNode);
-            attr.setPrefix(attributePrefix);
-            attr.setName(attributeName);
+            attr = new Attribute(node.getGraphDatabase(), attributePrefix, attributeName, attributeValue);
+            node.createRelationshipTo(attr.node, GoddagEdge.HAS_ATTRIBUTE);
         }
 
         attr.setValue(attributeValue);
@@ -101,7 +96,7 @@ public class Element extends GoddagNode {
         }
 
         final Node node = toDelete.node;
-        node.getSingleRelationship(HAS_ATTRIBUTE, INCOMING).delete();
+        node.getSingleRelationship(GoddagEdge.HAS_ATTRIBUTE, INCOMING).delete();
         node.delete();
     }
 
@@ -122,7 +117,7 @@ public class Element extends GoddagNode {
     }
 
     @Override
-    public void remove(Element root, GoddagNode toRemove, boolean recursive) {
+    public void remove(Element root, GoddagTreeNode toRemove, boolean recursive) {
         super.remove(root, toRemove, recursive);
         delete();
     }
@@ -130,7 +125,7 @@ public class Element extends GoddagNode {
     public void delete() {
         final List<Relationship> attrRels = new ArrayList<Relationship>();
         for (Relationship r : node.getRelationships()) {
-            if (r.getType().equals(HAS_ATTRIBUTE)) {
+            if (r.getType().equals(GoddagEdge.HAS_ATTRIBUTE)) {
                 attrRels.add(r);
             } else {
                 return;

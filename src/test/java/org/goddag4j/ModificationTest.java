@@ -27,7 +27,7 @@ import java.util.List;
 import junit.framework.Assert;
 
 import org.goddag4j.Element;
-import org.goddag4j.GoddagNode;
+import org.goddag4j.GoddagTreeNode;
 import org.goddag4j.Text;
 import org.junit.Test;
 import org.neo4j.helpers.collection.IteratorUtil;
@@ -41,7 +41,7 @@ public class ModificationTest extends GraphDatabaseTestContext {
         Assert.assertEquals(10, IteratorUtil.count(root.getChildren(root).iterator()));
 
 
-        List<GoddagNode> elements = new ArrayList<GoddagNode>();
+        List<GoddagTreeNode> elements = new ArrayList<GoddagTreeNode>();
         IteratorUtil.addToCollection(root.getChildren(root).iterator(), elements);
         Assert.assertEquals(10, elements.size());
         for (int i = 0; i < 10; i++) {
@@ -54,7 +54,7 @@ public class ModificationTest extends GraphDatabaseTestContext {
 
     @Test
     public void insertBefore() {
-        GoddagNode last = null;
+        GoddagTreeNode last = null;
         for (int i = 0; i < 10; i++) {
             Text text = new Text(db, Integer.toString(i));
             root.insert(root, text, last);
@@ -62,24 +62,24 @@ public class ModificationTest extends GraphDatabaseTestContext {
         }
         
         int i = 0;
-        for (GoddagNode text : root.getChildren(root)) {
+        for (GoddagTreeNode text : root.getChildren(root)) {
             Assert.assertEquals(Integer.toString(9 - (i++)), text.getText(root));
         }
     }
 
     @Test
     public void insertAndDelete() {
-        GoddagNode last = null;
+        GoddagTreeNode last = null;
         for (int i = 0; i < 10; i++) {
             Text text = new Text(db, Integer.toString(i));
             root.insert(root, text, last);
             last = text;
         }
-        List<GoddagNode> nodes = new ArrayList<GoddagNode>();
+        List<GoddagTreeNode> nodes = new ArrayList<GoddagTreeNode>();
         IteratorUtil.addToCollection(root.getChildren(root).iterator(), nodes);
         for (int i = 0; i < 10; i++) {
             if (i % 2 == 0) {
-                final GoddagNode child = nodes.get(i);
+                final GoddagTreeNode child = nodes.get(i);
                 child.getParent(root).remove(root, child, true);
             }
         }

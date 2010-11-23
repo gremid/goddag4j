@@ -27,9 +27,9 @@ import java.util.List;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
 
-public class Text extends GoddagNode {
+public class Text extends GoddagTreeNode {
 
-    private static final String PREFIX = GoddagNode.PREFIX + ".text";
+    private static final String PREFIX = GoddagTreeNode.PREFIX + ".text";
 
     public Text(Node node) {
         super(node);
@@ -54,7 +54,7 @@ public class Text extends GoddagNode {
         node.setProperty(PREFIX, content);
     }
 
-    public Text[] split(Integer[] positions) {
+    public Text[] split(int... positions) {
         final String content = getText();
         final int contentLength = content.length();
 
@@ -81,7 +81,7 @@ public class Text extends GoddagNode {
         }
 
         for (Element root : getRoots()) {
-            final GoddagNode parent = getParent(root);
+            final GoddagTreeNode parent = getParent(root);
             for (Text segment : segments) {
                 parent.insert(root, segment, this);
             }

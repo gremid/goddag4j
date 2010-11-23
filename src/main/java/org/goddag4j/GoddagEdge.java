@@ -31,12 +31,37 @@ import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.RelationshipType;
 
-public class GoddagEdge {
-    public enum EdgeType implements RelationshipType {
-        HAS_FIRST_CHILD, IS_LAST_CHILD_OF, HAS_SIBLING, CONTAINS, HAS_ATTRIBUTE        
+public class GoddagEdge implements RelationshipType {
+    public static final String ROOT_PROPERTY = GoddagNode.PREFIX + ".root";
+
+    public static final GoddagEdge HAS_FIRST_CHILD = new GoddagEdge("has-first-child");
+    public static final GoddagEdge IS_LAST_CHILD_OF = new GoddagEdge("is-last-child-of");
+    public static final GoddagEdge HAS_SIBLING = new GoddagEdge("has-sibling");
+    public static final GoddagEdge CONTAINS = new GoddagEdge("contains");
+    public static final GoddagEdge HAS_ATTRIBUTE = new GoddagEdge("has-attribute");
+
+    private final String name;
+
+    private GoddagEdge(String name) {
+        this.name = (GoddagNode.PREFIX + "." + name);
     }
 
-    public static final String ROOT_PROPERTY = GoddagNode.PREFIX + ".root";
+    public String name() {
+        return this.name;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj != null && obj instanceof RelationshipType) {
+            return this.name.equals(((RelationshipType) obj).name());
+        }
+        return super.equals(obj);
+    }
+
+    @Override
+    public int hashCode() {
+        return name.hashCode();
+    }
 
     public static Relationship find(Iterable<Relationship> edges, long root) {
         for (Relationship edge : edges) {
@@ -58,23 +83,19 @@ public class GoddagEdge {
         final GraphDatabaseService db = rel.getGraphDatabase();
         return new Iterable<Element>() {
 
-            @Override
             public Iterator<Element> iterator() {
                 return new Iterator<Element>() {
                     private final int numRoots = rootIds.length;
                     private int rootIndex = 0;
 
-                    @Override
                     public boolean hasNext() {
                         return rootIndex < numRoots;
                     }
 
-                    @Override
                     public Element next() {
-                        return (Element) GoddagNode.wrap(db.getNodeById(rootIds[rootIndex++]));
+                        return (Element) GoddagTreeNode.wrap(db.getNodeById(rootIds[rootIndex++]));
                     }
 
-                    @Override
                     public void remove() {
                         throw new UnsupportedOperationException();
                     }
@@ -83,7 +104,7 @@ public class GoddagEdge {
         };
     }
 
-    public static void add(EdgeType relationshipType, Node from, Node to, long root) {
+    public static void add(GoddagEdge relationshipType, Node from, Node to, long root) {
         for (Relationship r : from.getRelationships(relationshipType, OUTGOING)) {
             if (to.equals(r.getEndNode())) {
                 final long[] existing = (long[]) r.getProperty(ROOT_PROPERTY);
