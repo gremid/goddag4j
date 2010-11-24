@@ -38,11 +38,15 @@ public class MultiRootedTree implements Iterable<Element> {
     private final RelationshipType rootRelation;
     private final Node node;
 
-    protected MultiRootedTree(Node node, RelationshipType rootRelation) {
+    public MultiRootedTree(Node node, RelationshipType rootRelation) {
         this.node = node;
         this.rootRelation = rootRelation;
     }
 
+    public Node getNode() {
+        return node;
+    }
+    
     public Element newRoot(String prefix, String name) {
         final Element root = new Element(node.getGraphDatabase(), prefix, name);
         addRoot(root);

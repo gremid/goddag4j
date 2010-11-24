@@ -133,7 +133,7 @@ public class GoddagEdge implements RelationshipType {
 
                     final long[] shrunk = new long[numRoots - 1];
                     System.arraycopy(rootIds, 0, shrunk, 0, rc);
-                    System.arraycopy(rootIds, rc, shrunk, rc, numRoots - rc);
+                    System.arraycopy(rootIds, rc + 1, shrunk, rc, numRoots - rc - 1);
                     r.setProperty(ROOT_PROPERTY, shrunk);
                     return;
                 }
