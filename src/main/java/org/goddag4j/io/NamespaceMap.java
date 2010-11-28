@@ -37,7 +37,7 @@ public class NamespaceMap extends HashMap<URI, String> {
     private static final String TEI_NS_PREFIX = "tei";
     private static final String TEI_NS_URI = "http://www.tei-c.org/ns/1.0";
 
-    public static final String GODDAG_NS_URI = "http://juxtasoftware.org/goddag/ns";
+    public static final String GODDAG_NS_URI = "http://launchpad.net/goddag4j/";
     public static final String GODDAG_NS_PREFIX = "goddag";
 
     public NamespaceMap() {

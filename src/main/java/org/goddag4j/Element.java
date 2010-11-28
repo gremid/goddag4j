@@ -101,11 +101,11 @@ public class Element extends GoddagTreeNode {
     }
 
     public String getPrefix() {
-        return getOptionalStringProperty(PREFIX + ".prefix");
+        return (String) node.getProperty(PREFIX + ".prefix");
     }
 
     public void setPrefix(String prefix) {
-        setOptionalStringProperty(PREFIX + ".prefix", prefix);
+        node.setProperty(PREFIX + ".prefix", prefix);
     }
 
     public String getName() {
@@ -139,7 +139,7 @@ public class Element extends GoddagTreeNode {
     }
     
     public static String getQName(String prefix, String name) {
-        return (prefix == null || prefix.length() == 0 ? "" : prefix + ":") + name;
+        return (prefix.length() == 0 ? "" : prefix + ":") + name;
     }
 
     public String getQName() {

@@ -22,6 +22,7 @@
 package org.goddag4j;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.neo4j.graphdb.GraphDatabaseService;
@@ -54,7 +55,11 @@ public class Text extends GoddagTreeNode {
         node.setProperty(PREFIX, content);
     }
 
-    public Text[] split(int... positions) {
+    public List<Text> split(int... positions) {
+        if (positions.length == 0) {
+            return Collections.singletonList(this);
+        }
+
         final String content = getText();
         final int contentLength = content.length();
 
@@ -77,7 +82,7 @@ public class Text extends GoddagTreeNode {
         }
 
         if (segments.isEmpty()) {
-            return new Text[] { this };
+            return Collections.singletonList(this);
         }
 
         for (Element root : getRoots()) {
@@ -87,7 +92,7 @@ public class Text extends GoddagTreeNode {
             }
             parent.remove(root, this, false);
         }
-        return segments.toArray(new Text[0]);
+        return segments;
     }
 
     @Override

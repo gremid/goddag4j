@@ -31,8 +31,8 @@ import java.util.Stack;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
+import org.neo4j.helpers.collection.IterableWrapper;
 import org.neo4j.helpers.collection.IteratorUtil;
-import org.neo4j.helpers.collection.NestingIterable;
 
 public abstract class GoddagTreeNode extends GoddagNode {
 
@@ -41,20 +41,20 @@ public abstract class GoddagTreeNode extends GoddagNode {
     }
 
     public Iterable<Element> getRoots() {
-        return new NestingIterable<Element, Relationship>(node.getRelationships(GoddagEdge.CONTAINS, INCOMING)) {
+        return new IterableWrapper<Element, Relationship>(node.getRelationships(GoddagEdge.CONTAINS, INCOMING)) {
 
             @Override
-            protected Iterator<Element> createNestedIterator(Relationship item) {
-                return GoddagEdge.getRoots(item).iterator();
+            protected Element underlyingObjectToObject(Relationship object) {
+                return GoddagEdge.getRoot(object);
             }
         };
     }
 
     private GoddagTreeNode adjacentTreeNode(GoddagEdge edgeType, Direction direction, Element root) {
         final Relationship r = GoddagEdge.find(node.getRelationships(edgeType, direction), root.node.getId());
-        return (GoddagTreeNode) (r == null ? null : wrap(r.getOtherNode(node)));        
+        return (GoddagTreeNode) (r == null ? null : wrap(direction == INCOMING ? r.getStartNode() : r.getEndNode()));
     }
-    
+
     public GoddagTreeNode getParent(Element root) {
         return adjacentTreeNode(GoddagEdge.CONTAINS, INCOMING, root);
     }
@@ -170,9 +170,9 @@ public abstract class GoddagTreeNode extends GoddagNode {
         if (prevParent != null) {
             prevParent.unlink(root, child);
         }
-        
+
         final long rootId = root.node.getId();
-        
+
         if (before == null) {
             final GoddagTreeNode lastChild = getLastChild(root);
             if (lastChild != null) {
@@ -242,7 +242,7 @@ public abstract class GoddagTreeNode extends GoddagNode {
         }
 
         unlink(root, child);
-        
+
         if (!node.hasRelationship()) {
             node.delete();
         }
@@ -278,7 +278,7 @@ public abstract class GoddagTreeNode extends GoddagNode {
 
         GoddagEdge.remove(child.node.getRelationships(GoddagEdge.CONTAINS, INCOMING), rootId);
     }
-    
+
     public void clear(Element root) {
         GoddagTreeNode child = getFirstChild(root);
         while (child != null) {

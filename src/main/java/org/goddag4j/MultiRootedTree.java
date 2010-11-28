@@ -62,7 +62,7 @@ public class MultiRootedTree implements Iterable<Element> {
 
             @Override
             protected Element underlyingObjectToObject(Relationship object) {
-                return (Element) GoddagTreeNode.wrap(object.getOtherNode(node));
+                return (Element) GoddagTreeNode.wrap(object.getEndNode());
             }
         }.iterator();
     }

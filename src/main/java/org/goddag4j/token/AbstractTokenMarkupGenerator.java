@@ -1,58 +1,71 @@
 package org.goddag4j.token;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
 import org.goddag4j.Element;
 import org.goddag4j.GoddagTreeNode;
 import org.goddag4j.Text;
+import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.graphdb.Transaction;
 
 public abstract class AbstractTokenMarkupGenerator implements TokenMarkupGenerator {
-    protected static final Logger LOG = Logger.getLogger(AbstractTokenMarkupGenerator.class.getPackage().getName());
+    private GraphDatabaseService db;
 
     public void generate(Iterable<Text> input, Element to) {
+        this.db = to.node.getGraphDatabase();
         splitUp(input, to);
         groupTokenContents(to);
     }
 
     private void splitUp(Iterable<Text> input, Element into) {
         for (Text textNode : input) {
-            for (Text segment : textNode.split(getTokenStarts(textNode))) {
-                if (LOG.isLoggable(Level.FINEST)) {
-                    LOG.finest("New text node: " + segment);
+            Transaction tx = db.beginTx();
+            try {
+                for (Text segment : textNode.split(getTokenStarts(textNode))) {
+                    into.insert(into, segment, null);
                 }
-                into.insert(into, segment, null);
+                tx.success();
+            } finally {
+                tx.finish();
             }
         }
     }
 
     private void groupTokenContents(Element in) {
-        GoddagTreeNode prev = null;
-        GoddagTreeNode current = in.getFirstChild(in);
-        GoddagTreeNode token = null;
-        do {
-            if (current == null) {
-                break;
-            }
-
-            if (isTokenStart(in, prev, current)) {
-                if (LOG.isLoggable(Level.FINEST)) {
-                    LOG.finest("New token");
+        Transaction tx = db.beginTx();
+        try {
+            GoddagTreeNode prev = null;
+            GoddagTreeNode current = in.getFirstChild(in);
+            GoddagTreeNode token = null;
+            do {
+                if (current == null) {
+                    break;
                 }
-                token = createTokenElement(in);
-                in.insert(in, token, current);
-            }
 
-            GoddagTreeNode next = current.getNextSibling(in);
-            if (token != null) {
-                if (LOG.isLoggable(Level.FINEST)) {
-                    LOG.finest("Add to token: " + current);
+                if (tx == null) {
+                    tx = db.beginTx();
                 }
-                token.insert(in, current, null);
+                
+                if (isTokenStart(in, prev, current)) {
+                    token = createTokenElement(in);
+                    in.insert(in, token, current);
+                }
+
+                GoddagTreeNode next = current.getNextSibling(in);
+                if (token != null) {
+                    token.insert(in, current, null);
+                }
+                prev = current;
+                current = next;
+                
+                tx.success();
+                tx.finish();
+                tx = null;
+            } while (true);
+        } finally {
+            if (tx != null) {
+                tx.finish();
             }
-            prev = current;
-            current = next;
-        } while (true);
+        }
+
     }
 
     protected abstract int[] getTokenStarts(Text textNode);
