@@ -39,13 +39,34 @@ import org.goddag4j.Text;
 
 public class GoddagJSONWriter {
 
+    public interface GoddagJSONEnhancer {
+        void enhance(GoddagTreeNode node, NodeType nt, JsonGenerator out) throws IOException;
+
+        void enhance(JsonGenerator out) throws IOException;
+    }
+
+    public static final GoddagJSONEnhancer NOOP_ENHANCER = new GoddagJSONEnhancer() {
+
+        public void enhance(GoddagTreeNode node, NodeType nt, JsonGenerator out) {
+        }
+
+        public void enhance(JsonGenerator out) throws IOException {
+        };
+    };
+    
     private final Map<URI, String> namespaces;
+    private final GoddagJSONEnhancer enhancer;
     private Map<NodeType, Set<GoddagTreeNode>> writeLog = new HashMap<NodeType, Set<GoddagTreeNode>>();
 
     public GoddagJSONWriter(Map<URI, String> namespaces) {
-        this.namespaces = namespaces;
+        this(namespaces, NOOP_ENHANCER);
     }
-    
+
+    public GoddagJSONWriter(Map<URI, String> namespaces, GoddagJSONEnhancer enhancer) {
+        this.namespaces = namespaces;
+        this.enhancer = enhancer;
+    }
+
     public void write(Iterable<Element> roots, JsonGenerator out) throws IOException {
         writeLog.clear();
         for (NodeType nt : NodeType.values()) {
@@ -77,6 +98,8 @@ public class GoddagJSONWriter {
             }
             out.writeEndObject();
         }
+
+        enhancer.enhance(out);
         out.writeEndObject();
         writeLog.clear();
     }
@@ -127,10 +150,7 @@ public class GoddagJSONWriter {
             out.writeString(pi.getInstruction());
             break;
         }
-        doWriteNode(out, node, nt);
+        enhancer.enhance(node, nt, out);
         out.writeEndArray();
-    }
-
-    protected void doWriteNode(JsonGenerator out, GoddagTreeNode node, NodeType nt) {
     }
 }
